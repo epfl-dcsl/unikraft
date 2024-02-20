@@ -1,11 +1,8 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Authors: Costin Lupu <costin.lupu@cs.pub.ro>
- *          Simon Kuenzer <simon.kuenzer@neclab.eu>
+ * Authors: Alexander Jung <a.jung@lancs.ac.uk>
  *
- * Copyright (c) 2018, NEC Europe Ltd., NEC Corporation. All rights reserved.
- * Copyright (c) 2021, NEC Laboratories Europe GmbH. NEC Corporation.
- *                     All rights reserved.
+ * Copyright (c) 2021, Lancaster University. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,28 +29,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef __TENCLAVE_MODE_H__
+#define __TENCLAVE_MODE_H__
 
-#include <uk/arch/types.h>
-#include <uk/plat/tls.h>
+typedef unsigned int k_mode_t;
 
-#if defined(LINUXUPLAT) && defined(__X86_64__)
-#include <linuxu/x86/tls.h>
-#elif defined(TENCLAVEPLAT) && defined(__X86_64__)
-#include <tenclave/x86/tls.h>
-#elif defined(__X86_64__)
-#include <x86/tls.h>
-#elif defined(__ARM_64__)
-#include <arm/arm64/tls.h>
-#else
-#error "For thread-local storage support, add tls.h for current architecture."
-#endif
+#define K_O_RDONLY 0x0000
 
-__uptr ukplat_tlsp_get(void)
-{
-	return (__uptr) get_tls_pointer();
-}
-
-void ukplat_tlsp_set(__uptr tlsp)
-{
-	set_tls_pointer(tlsp);
-}
+#endif /* __TENCLAVE_MODE_H__ */

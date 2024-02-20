@@ -1,11 +1,8 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
  * Authors: Costin Lupu <costin.lupu@cs.pub.ro>
- *          Simon Kuenzer <simon.kuenzer@neclab.eu>
  *
- * Copyright (c) 2018, NEC Europe Ltd., NEC Corporation. All rights reserved.
- * Copyright (c) 2021, NEC Laboratories Europe GmbH. NEC Corporation.
- *                     All rights reserved.
+ * Copyright (c) 2017, NEC Europe Ltd., NEC Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,27 +30,43 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <uk/arch/types.h>
-#include <uk/plat/tls.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <uk/plat/lcpu.h>
+#include <uk/plat/common/_time.h>
+#include <tenclave/time.h>
+#include <tenclave/syscall.h>
+#include <uk/print.h>
 
-#if defined(LINUXUPLAT) && defined(__X86_64__)
-#include <linuxu/x86/tls.h>
-#elif defined(TENCLAVEPLAT) && defined(__X86_64__)
-#include <tenclave/x86/tls.h>
-#elif defined(__X86_64__)
-#include <x86/tls.h>
-#elif defined(__ARM_64__)
-#include <arm/arm64/tls.h>
-#else
-#error "For thread-local storage support, add tls.h for current architecture."
-#endif
-
-__uptr ukplat_tlsp_get(void)
+static void do_pselect(struct k_timespec *timeout)
 {
-	return (__uptr) get_tls_pointer();
+	int ret;
+	int nfds = 0;
+	k_fd_set *readfds = NULL;
+	k_fd_set *writefds = NULL;
+	k_fd_set *exceptfds = NULL;
+
+	ret = sys_pselect6(nfds, readfds, writefds, exceptfds, timeout, NULL);
+	if (ret < 0 && ret != -EINTR)
+		uk_pr_warn("Failed to halt LCPU: %d\n", ret);
 }
 
-void ukplat_tlsp_set(__uptr tlsp)
+void halt(void)
 {
-	set_tls_pointer(tlsp);
+	do_pselect(NULL);
+}
+
+void time_block_until(__snsec until)
+{
+	struct k_timespec timeout;
+	__nsec now = ukplat_monotonic_clock();
+
+	if (until < 0 || (__nsec) until < now)
+		return; /* timeout expired already */
+
+	until -= now;
+	timeout.tv_sec  = until / ukarch_time_sec_to_nsec(1);
+	timeout.tv_nsec = until % ukarch_time_sec_to_nsec(1);
+
+	do_pselect(&timeout);
 }

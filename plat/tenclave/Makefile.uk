@@ -1,0 +1,66 @@
+##
+## Tyche enclave platform registration
+##
+$(eval $(call addplat_s,tenclave,$(CONFIG_PLAT_TENCLAVE)))
+
+##
+## Linux user platform library registration
+##
+$(eval $(call addplatlib,tenclave,libtenclaveplat))
+$(eval $(call addplatlib_s,tenclave,libtenclavetapnet,$(CONFIG_TAP_NET)))
+
+## Adding libparam for the tenclave platform
+$(eval $(call addlib_paramprefix,libtenclaveplat,tenclave))
+$(eval $(call addlib_paramprefix,libtenclavetapnet,tap))
+
+##
+## Platform library definitions
+##
+LIBTENCLAVEPLAT_ASINCLUDES-y        += -I$(LIBTENCLAVEPLAT_BASE)/include
+LIBTENCLAVEPLAT_ASINCLUDES-y        += -I$(UK_PLAT_COMMON_BASE)/include
+LIBTENCLAVEPLAT_CINCLUDES-y         += -I$(LIBTENCLAVEPLAT_BASE)/include
+LIBTENCLAVEPLAT_CINCLUDES-y         += -I$(UK_PLAT_COMMON_BASE)/include
+
+LIBTENCLAVEPLAT_ASFLAGS             += -DTENCLAVEPLAT
+LIBTENCLAVEPLAT_CFLAGS              += -DTENCLAVEPLAT
+LIBTENCLAVEPLAT_CXXFLAGS            += -DTENCLAVEPLAT
+
+LIBTENCLAVEPLAT_SRCS-$(CONFIG_ARCH_X86_32) += $(LIBTENCLAVEPLAT_BASE)/x86/entry32.S
+LIBTENCLAVEPLAT_SRCS-$(CONFIG_ARCH_X86_64) += $(LIBTENCLAVEPLAT_BASE)/x86/entry64.S
+LIBTENCLAVEPLAT_SRCS-$(CONFIG_ARCH_ARM_32) += $(LIBTENCLAVEPLAT_BASE)/arm/entry32.S
+LIBTENCLAVEPLAT_SRCS-$(CONFIG_ARCH_ARM_64) += $(LIBTENCLAVEPLAT_BASE)/arm64/entry64.S
+LIBTENCLAVEPLAT_SRCS-$(CONFIG_FPSIMD)      += $(UK_PLAT_COMMON_BASE)/arm/fp_arm64.c|isr
+LIBTENCLAVEPLAT_SRCS-y              += $(LIBTENCLAVEPLAT_BASE)/setup.c
+LIBTENCLAVEPLAT_SRCS-y              += $(LIBTENCLAVEPLAT_BASE)/console.c
+LIBTENCLAVEPLAT_SRCS-y              += $(LIBTENCLAVEPLAT_BASE)/shutdown.c
+LIBTENCLAVEPLAT_SRCS-y              += $(LIBTENCLAVEPLAT_BASE)/memory.c
+LIBTENCLAVEPLAT_SRCS-y              += $(LIBTENCLAVEPLAT_BASE)/lcpu.c
+LIBTENCLAVEPLAT_SRCS-y              += $(LIBTENCLAVEPLAT_BASE)/irq.c
+LIBTENCLAVEPLAT_SRCS-y              += $(LIBTENCLAVEPLAT_BASE)/time.c
+LIBTENCLAVEPLAT_SRCS-y              += $(UK_PLAT_COMMON_BASE)/lcpu.c|common
+LIBTENCLAVEPLAT_SRCS-y              += $(UK_PLAT_COMMON_BASE)/memory.c|common
+LIBTENCLAVEPLAT_SRCS-y              += $(UK_PLAT_COMMON_BASE)/tls.c|common
+
+LIBTENCLAVEPLAT_SRCS-y                 += $(UK_PLAT_COMMON_BASE)/bootinfo.c|common
+LIBTENCLAVEPLAT_SRCS-$(CONFIG_LIBFDT)  += $(UK_PLAT_COMMON_BASE)/bootinfo_fdt.c|common
+LIBTENCLAVEPLAT_SRCS-y                 += $(UK_PLAT_COMMON_BASE)/bootinfo.lds.S|common
+
+LIBTENCLAVEPLAT_SRCS-y              += $(LIBTENCLAVEPLAT_BASE)/io.c
+LIBTENCLAVEPLAT_SRCS-$(CONFIG_TAP_NET) += $(LIBTENCLAVEPLAT_BASE)/tap_io.c
+LIBTENCLAVEPLAT_SRCS-$(CONFIG_ARCH_X86_64) += \
+			$(LIBTENCLAVEPLAT_BASE)/x86/link64.lds.S
+LIBTENCLAVEPLAT_SRCS-$(CONFIG_ARCH_ARM_32) += \
+			$(LIBTENCLAVEPLAT_BASE)/arm/link.lds.S
+LIBTENCLAVEPLAT_SRCS-$(CONFIG_ARCH_ARM_64) += \
+			$(LIBTENCLAVEPLAT_BASE)/arm64/link.lds.S
+
+##
+## TENCLAVETAPNET Source
+LIBTENCLAVETAPNET_ASINCLUED-y         += -I$(LIBTENCLAVEPLAT_BASE)/include
+LIBTENCLAVETAPNET_ASINCLUDES-y         += -I$(UK_PLAT_DRIVERS_BASE)/include
+LIBTENCLAVETAPNET_CINCLUDES-y         += -I$(LIBTENCLAVEPLAT_BASE)/include
+LIBTENCLAVETAPNET_CINCLUDES-y         += -I$(UK_PLAT_DRIVERS_BASE)/include
+
+LIBTENCLAVETAPNET_CFLAGS-$(CONFIG_TAP_DEV_DEBUG) += -DUK_DEBUG
+
+LIBTENCLAVETAPNET_SRCS-y		  += $(UK_PLAT_DRIVERS_BASE)/tap/tap.c

@@ -1,11 +1,9 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Authors: Costin Lupu <costin.lupu@cs.pub.ro>
- *          Simon Kuenzer <simon.kuenzer@neclab.eu>
+ * Authors: Simon Kuenzer <simon.kuenzer@neclab.eu>
  *
- * Copyright (c) 2018, NEC Europe Ltd., NEC Corporation. All rights reserved.
- * Copyright (c) 2021, NEC Laboratories Europe GmbH. NEC Corporation.
- *                     All rights reserved.
+ *
+ * Copyright (c) 2017, NEC Europe Ltd., NEC Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,27 +31,38 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <uk/arch/types.h>
-#include <uk/plat/tls.h>
+#include <errno.h>
+#include <inttypes.h>
+#include <string.h>
+#include <tenclave/syscall.h>
+#include <uk/arch/lcpu.h>
+#include <uk/plat/bootstrap.h>
+#include <uk/print.h>
 
-#if defined(LINUXUPLAT) && defined(__X86_64__)
-#include <linuxu/x86/tls.h>
-#elif defined(TENCLAVEPLAT) && defined(__X86_64__)
-#include <tenclave/x86/tls.h>
-#elif defined(__X86_64__)
-#include <x86/tls.h>
-#elif defined(__ARM_64__)
-#include <arm/arm64/tls.h>
-#else
-#error "For thread-local storage support, add tls.h for current architecture."
-#endif
+#include <tenclave/console.h>
 
-__uptr ukplat_tlsp_get(void)
+__noreturn void ukplat_terminate(enum ukplat_gstate request)
 {
-	return (__uptr) get_tls_pointer();
+	int ret;
+
+	_libtenclaveplat_fini_console();
+
+	switch (request) {
+	case UKPLAT_HALT:
+	case UKPLAT_RESTART:
+		ret = sys_exit(0);
+		break;
+	default: /* UKPLAT_CRASH */
+		ret = sys_exit(1);
+		break;
+	}
+
+	uk_pr_crit("sys_exit() failed: %d\n", ret);
+	for (;;)
+		; /* syscall failed, loop forever */
 }
 
-void ukplat_tlsp_set(__uptr tlsp)
+int ukplat_suspend(void)
 {
-	set_tls_pointer(tlsp);
+	return -EBUSY;
 }

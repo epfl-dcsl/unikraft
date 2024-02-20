@@ -1,11 +1,11 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Authors: Costin Lupu <costin.lupu@cs.pub.ro>
- *          Simon Kuenzer <simon.kuenzer@neclab.eu>
+ * Authors: Simon Kuenzer <simon.kuenzer@neclab.eu>,
+ *			Florin Postolache <florin.postolache80@gmail.com>
  *
- * Copyright (c) 2018, NEC Europe Ltd., NEC Corporation. All rights reserved.
- * Copyright (c) 2021, NEC Laboratories Europe GmbH. NEC Corporation.
- *                     All rights reserved.
+ * Copyright (c) 2017, NEC Europe Ltd., NEC Corporation,
+ *               2022, Florin Postolache, <florin.postolache80@gmail.com>
+ *               All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,27 +33,32 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <uk/arch/types.h>
-#include <uk/plat/tls.h>
+/*
+ * We do not want to unmap anything.
+ */
+.section .bss
+.align	4
+.globl	bpt_unmap_mrd
+bpt_unmap_mrd:
+.space	64
 
-#if defined(LINUXUPLAT) && defined(__X86_64__)
-#include <linuxu/x86/tls.h>
-#elif defined(TENCLAVEPLAT) && defined(__X86_64__)
-#include <tenclave/x86/tls.h>
-#elif defined(__X86_64__)
-#include <x86/tls.h>
-#elif defined(__ARM_64__)
-#include <arm/arm64/tls.h>
-#else
-#error "For thread-local storage support, add tls.h for current architecture."
-#endif
+.section .text
 
-__uptr ukplat_tlsp_get(void)
-{
-	return (__uptr) get_tls_pointer();
-}
+/* For now, although inaccurate, set the
+ * _base_addr symbol to _libtenclaveplat_start, since that is where most images
+ * happen to begin anyway. We do not use it in tenclave anyway, so we do not care.
+ * We only do this so that references to this symbol do not generate build
+ * errors, although it is not used.
+ */
+.globl	_base_addr
+.set	_base_addr, _libtenclaveplat_start
 
-void ukplat_tlsp_set(__uptr tlsp)
-{
-	set_tls_pointer(tlsp);
-}
+.global _libtenclaveplat_start
+_libtenclaveplat_start:
+	ldr x0, [sp]		// argc to r0
+	add x1, sp, #8		// argv to r1
+	bl _libtenclaveplat_entry
+
+	// Protection
+_libtenclaveplat_err:
+	b _libtenclaveplat_err

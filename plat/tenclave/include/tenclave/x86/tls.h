@@ -1,11 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Authors: Costin Lupu <costin.lupu@cs.pub.ro>
- *          Simon Kuenzer <simon.kuenzer@neclab.eu>
- *
- * Copyright (c) 2018, NEC Europe Ltd., NEC Corporation. All rights reserved.
- * Copyright (c) 2021, NEC Laboratories Europe GmbH. NEC Corporation.
- *                     All rights reserved.
+ * Copyright (c) 2019, NEC Europe Ltd., NEC Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,28 +27,29 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef __PLAT_TENCLAVE_TLS_H__
+#define __PLAT_TENCLAVE_TLS_H__
 
-#include <uk/arch/types.h>
-#include <uk/plat/tls.h>
+#include <tenclave/syscall.h>
 
-#if defined(LINUXUPLAT) && defined(__X86_64__)
-#include <linuxu/x86/tls.h>
-#elif defined(TENCLAVEPLAT) && defined(__X86_64__)
-#include <tenclave/x86/tls.h>
-#elif defined(__X86_64__)
-#include <x86/tls.h>
-#elif defined(__ARM_64__)
-#include <arm/arm64/tls.h>
-#else
-#error "For thread-local storage support, add tls.h for current architecture."
-#endif
-
-__uptr ukplat_tlsp_get(void)
+static inline void set_tls_pointer(__uptr arg)
 {
-	return (__uptr) get_tls_pointer();
+	sys_arch_prctl(ARCH_SET_FS, arg);
 }
 
-void ukplat_tlsp_set(__uptr tlsp)
+static inline __uptr get_tls_pointer(void)
 {
-	set_tls_pointer(tlsp);
+	__uptr addr;
+	int ret;
+
+	/* TODO: Read from FS register directly instead
+	 * of issue'ing a system Call
+	 */
+	ret = sys_arch_prctl(ARCH_GET_FS, (long) &addr);
+	if (ret < 0)
+		UK_CRASH("Failed to retrieve TLSP\n");
+
+	return addr;
 }
+
+#endif /* __PLAT_TENCLAVE_TLS_H__ */

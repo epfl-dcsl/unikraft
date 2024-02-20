@@ -1,11 +1,9 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Authors: Costin Lupu <costin.lupu@cs.pub.ro>
- *          Simon Kuenzer <simon.kuenzer@neclab.eu>
+ * Authors: Simon Kuenzer <simon.kuenzer@neclab.eu>
  *
- * Copyright (c) 2018, NEC Europe Ltd., NEC Corporation. All rights reserved.
- * Copyright (c) 2021, NEC Laboratories Europe GmbH. NEC Corporation.
- *                     All rights reserved.
+ *
+ * Copyright (c) 2017, NEC Europe Ltd., NEC Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,27 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <uk/arch/types.h>
-#include <uk/plat/tls.h>
-
-#if defined(LINUXUPLAT) && defined(__X86_64__)
-#include <linuxu/x86/tls.h>
-#elif defined(TENCLAVEPLAT) && defined(__X86_64__)
-#include <tenclave/x86/tls.h>
-#elif defined(__X86_64__)
-#include <x86/tls.h>
-#elif defined(__ARM_64__)
-#include <arm/arm64/tls.h>
-#else
-#error "For thread-local storage support, add tls.h for current architecture."
-#endif
-
-__uptr ukplat_tlsp_get(void)
+int _ukplat_mem_mappings_init(void)
 {
-	return (__uptr) get_tls_pointer();
-}
-
-void ukplat_tlsp_set(__uptr tlsp)
-{
-	set_tls_pointer(tlsp);
+	return 0;
 }

@@ -50,6 +50,7 @@
  */
 #ifdef CONFIG_PLAT_LINUXU
 #include <linuxu/tap.h>
+#elifdef CONFIG_PLAT_TENCLAVE
 #else
 #error "The driver is supported on linuxu platform"
 #endif /* CONFIG_PLAT_LINUXU */

@@ -34,9 +34,9 @@
 #include <string.h>
 #include <uk/plat/time.h>
 #include <uk/assert.h>
-#include <linuxu/irq.h>
-#include <linuxu/syscall.h>
-#include <linuxu/time.h>
+#include <tenclave/irq.h>
+#include <tenclave/syscall.h>
+#include <tenclave/time.h>
 
 static k_timer_t timerid;
 

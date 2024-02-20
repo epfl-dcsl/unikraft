@@ -1,11 +1,9 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Authors: Costin Lupu <costin.lupu@cs.pub.ro>
- *          Simon Kuenzer <simon.kuenzer@neclab.eu>
+ * Authors: Simon Kuenzer <simon.kuenzer@neclab.eu>
  *
- * Copyright (c) 2018, NEC Europe Ltd., NEC Corporation. All rights reserved.
- * Copyright (c) 2021, NEC Laboratories Europe GmbH. NEC Corporation.
- *                     All rights reserved.
+ *
+ * Copyright (c) 2017, NEC Europe Ltd., NEC Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,28 +30,40 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * We do not want to unmap anything.
+ */
+.section .bss
+.align	4
+.globl	bpt_unmap_mrd
+bpt_unmap_mrd:
+.space	64
 
-#include <uk/arch/types.h>
-#include <uk/plat/tls.h>
+.section .text
 
-#if defined(LINUXUPLAT) && defined(__X86_64__)
-#include <linuxu/x86/tls.h>
-#elif defined(TENCLAVEPLAT) && defined(__X86_64__)
-#include <tenclave/x86/tls.h>
-#elif defined(__X86_64__)
-#include <x86/tls.h>
-#elif defined(__ARM_64__)
-#include <arm/arm64/tls.h>
-#else
-#error "For thread-local storage support, add tls.h for current architecture."
-#endif
+/* For now, although inaccurate, set the
+ * _base_addr symbol to _libtenclaveplat_start, since that is where most images
+ * happen to begin anyway. We do not use it in tenclave anyway, so we do not care.
+ * We only do this so that references to this symbol do not generate build
+ * errors, although it is not used.
+ */
+.globl	_base_addr
+.set	_base_addr, _libtenclaveplat_start
 
-__uptr ukplat_tlsp_get(void)
-{
-	return (__uptr) get_tls_pointer();
-}
+.global _libtenclaveplat_start
+_libtenclaveplat_start:
+	xorl %ebp, %ebp		# mark the outmost frame (clear the frame pointer)
 
-void ukplat_tlsp_set(__uptr tlsp)
-{
-	set_tls_pointer(tlsp);
-}
+	popq %rdi		# argc as first argument
+	movq %rsp, %rsi		# move argv to rsi, the second parameter in x86_64 abi
+
+	# ignore environ for now
+
+	andq $~15, %rsp		# align stack to 16-byte boundary
+
+	# Run _libtenclaveplat_entry(argc, argv)
+	callq *_libtenclaveplat_entry@GOTPCREL(%rip)
+
+	# Protection
+_libtenclaveplat_start_err:
+	jmp *_libtenclaveplat_start_err(%rip)

@@ -1,11 +1,9 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
  * Authors: Costin Lupu <costin.lupu@cs.pub.ro>
- *          Simon Kuenzer <simon.kuenzer@neclab.eu>
+ *          Florian Schmidt <florian.schmidt@neclab.eu>
  *
  * Copyright (c) 2018, NEC Europe Ltd., NEC Corporation. All rights reserved.
- * Copyright (c) 2021, NEC Laboratories Europe GmbH. NEC Corporation.
- *                     All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,28 +30,33 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef __TENCLAVE_TIME_H__
+#define __TENCLAVE_TIME_H__
 
-#include <uk/arch/types.h>
-#include <uk/plat/tls.h>
+#include <uk/plat/time.h>
+#include <tenclave/signal.h>
 
-#if defined(LINUXUPLAT) && defined(__X86_64__)
-#include <linuxu/x86/tls.h>
-#elif defined(TENCLAVEPLAT) && defined(__X86_64__)
-#include <tenclave/x86/tls.h>
-#elif defined(__X86_64__)
-#include <x86/tls.h>
-#elif defined(__ARM_64__)
-#include <arm/arm64/tls.h>
-#else
-#error "For thread-local storage support, add tls.h for current architecture."
-#endif
+#define TIMER_INTVAL_NSEC    UKPLAT_TIME_TICK_NSEC
+#define TIMER_SIGNUM         SIGALRM
 
-__uptr ukplat_tlsp_get(void)
-{
-	return (__uptr) get_tls_pointer();
-}
 
-void ukplat_tlsp_set(__uptr tlsp)
-{
-	set_tls_pointer(tlsp);
-}
+/* POSIX definitions */
+
+#define K_CLOCK_REALTIME       0
+#define K_CLOCK_MONOTONIC      1
+
+typedef int k_clockid_t;
+
+typedef int k_timer_t;
+
+struct k_timespec {
+	long tv_sec;
+	long tv_nsec;
+};
+
+struct k_itimerspec {
+	struct k_timespec it_interval;
+	struct k_timespec it_value;
+};
+
+#endif /* __TENCLAVE_TIME_H__ */

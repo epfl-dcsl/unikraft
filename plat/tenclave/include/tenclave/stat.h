@@ -1,11 +1,8 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Authors: Costin Lupu <costin.lupu@cs.pub.ro>
- *          Simon Kuenzer <simon.kuenzer@neclab.eu>
+ * Authors: Alexander Jung <a.jung@lancs.ac.uk>
  *
- * Copyright (c) 2018, NEC Europe Ltd., NEC Corporation. All rights reserved.
- * Copyright (c) 2021, NEC Laboratories Europe GmbH. NEC Corporation.
- *                     All rights reserved.
+ * Copyright (c) 2021, Lancaster University. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,28 +29,41 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef __TENCLAVE_STAT_H__
+#define __TENCLAVE_STAT_H__
 
-#include <uk/arch/types.h>
-#include <uk/plat/tls.h>
+#include <tenclave/time.h>
+#include <tenclave/mode.h>
 
-#if defined(LINUXUPLAT) && defined(__X86_64__)
-#include <linuxu/x86/tls.h>
-#elif defined(TENCLAVEPLAT) && defined(__X86_64__)
-#include <tenclave/x86/tls.h>
-#elif defined(__X86_64__)
-#include <x86/tls.h>
-#elif defined(__ARM_64__)
-#include <arm/arm64/tls.h>
-#else
-#error "For thread-local storage support, add tls.h for current architecture."
-#endif
+typedef __u64 k_dev_t;
+typedef __u64 k_ino_t;
+typedef __u32 k_nlink_t;
+typedef unsigned int k_uid_t;
+typedef unsigned int k_gid_t;
+typedef unsigned int k_id_t;
+typedef __off k_off_t;
+typedef long k_blksize_t;
+typedef __s64 k_blkcnt_t;
 
-__uptr ukplat_tlsp_get(void)
-{
-	return (__uptr) get_tls_pointer();
-}
 
-void ukplat_tlsp_set(__uptr tlsp)
-{
-	set_tls_pointer(tlsp);
-}
+struct k_stat {
+	k_dev_t st_dev;
+	k_ino_t st_ino;
+	k_nlink_t st_nlink;
+	k_mode_t st_mode;
+	k_uid_t st_uit;
+	k_gid_t st_gid;
+
+	unsigned int __pad0;
+
+	k_dev_t st_rdev;
+	k_off_t st_size;
+	k_blksize_t st_blksize;
+	k_blkcnt_t st_blocks;
+
+	struct k_timespec st_atim;
+	struct k_timespec st_mtim;
+	struct k_timespec st_ctim;
+};
+
+#endif /* __TENCLAVE_STAT_H__ */
